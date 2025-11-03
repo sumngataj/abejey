@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Happy Birthday!!!</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='90' font-size='90'>🌹</text></svg>"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background: linear-gradient(
+          180deg,
+          #d6c8ff 0%,
+          #e8dbff 50%,
+          #f1e5ff 100%
+        );
+        overflow: hidden;
+      }
+
+      .note {
+        position: absolute;
+        padding: 1rem;
+        border-radius: 0.3rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        width: 150px;
+        font-family: "Poppins", sans-serif;
+        transform: rotate(var(--rotate));
+        background: var(--color);
+        color: #333;
+        animation: pop 0.3s ease-out;
+      }
+
+      @keyframes pop {
+        from {
+          transform: scale(0.5) rotate(var(--rotate));
+          opacity: 0;
+        }
+        to {
+          transform: scale(1) rotate(var(--rotate));
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="flex flex-col items-center justify-center min-h-screen relative text-gray-700"
+  >
+    <div
+      class="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-10 text-center max-w-md z-10 relative"
+    >
+      <div class="text-5xl mb-4">🎂</div>
+      <h1 class="text-4xl font-bold text-purple-700 mb-3">
+        Happy Birthday,Rose!
+      </h1>
+      <p class="text-gray-600 mb-6">You thought we forgot? As if!</p>
+      <button
+        id="addWishBtn"
+        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full text-lg transition-all shadow-md"
+      >
+        Leave a note on the wall 🧱
+      </button>
+    </div>
+
+    <div class="absolute bottom-6 text-sm text-gray-600">Made with 💜💜💜</div>
+
+    <div
+      id="wishModal"
+      class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-20"
+    >
+      <div
+        class="bg-white rounded-2xl p-8 shadow-2xl w-11/12 sm:w-3/4 md:w-1/2 h-auto flex flex-col justify-between"
+      >
+        <div>
+          <h2 class="text-2xl font-semibold text-purple-700 mb-4 text-left">
+            Drop it on the wall!
+          </h2>
+
+          <input
+            id="wishName"
+            type="text"
+            placeholder="Enter your nickname"
+            class="w-full mb-2 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-400 outline-none"
+          />
+          <p id="nameError" class="text-red-500 text-sm mb-3 hidden">
+            Please enter your nickname.
+          </p>
+
+          <textarea
+            id="wishText"
+            rows="5"
+            class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-400 outline-none resize-none text-left"
+            placeholder="Type your wish..."
+          ></textarea>
+          <p id="wishError" class="text-red-500 text-sm mt-2 hidden">
+            Please enter your birthday wish.
+          </p>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-4">
+          <button
+            id="submitWish"
+            class="bg-purple-600 text-white px-5 py-2 rounded-md hover:bg-purple-700 transition"
+          >
+            Add
+          </button>
+          <button
+            id="closeModal"
+            class="bg-gray-300 text-gray-700 px-5 py-2 rounded-md hover:bg-gray-400 transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+        onSnapshot,
+        serverTimestamp,
+      } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAm0rgoqaLFvqfsjDJhBZFODkeeoQwJXIo",
+        authDomain: "birthday-wishes-c196b.firebaseapp.com",
+        projectId: "birthday-wishes-c196b",
+        storageBucket: "birthday-wishes-c196b.firebasestorage.app",
+        messagingSenderId: "318623821049",
+        appId: "1:318623821049:web:923b4645b5fc33845f0628",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      const addWishBtn = document.getElementById("addWishBtn");
+      const wishModal = document.getElementById("wishModal");
+      const closeModal = document.getElementById("closeModal");
+      const submitWish = document.getElementById("submitWish");
+      const wishText = document.getElementById("wishText");
+      const nicknameInput = document.getElementById("wishName");
+      const nameError = document.getElementById("nameError");
+      const wishError = document.getElementById("wishError");
+
+      function launchConfetti() {
+        const duration = 2000;
+        const end = Date.now() + duration;
+
+        (function frame() {
+          confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 70,
+            origin: { x: 0 },
+          });
+          confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 70,
+            origin: { x: 1 },
+          });
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        })();
+      }
+
+      addWishBtn.addEventListener("click", () => {
+        wishModal.classList.remove("hidden");
+        nameError.classList.add("hidden");
+        wishError.classList.add("hidden");
+      });
+
+      closeModal.addEventListener("click", () => {
+        wishModal.classList.add("hidden");
+        wishText.value = "";
+        nicknameInput.value = "";
+        nameError.classList.add("hidden");
+        wishError.classList.add("hidden");
+      });
+
+      function randomColor() {
+        const colors = ["#fff7a1", "#ffd6e8", "#c8f7dc", "#e6d4ff", "#f8e4b7"];
+        return colors[Math.floor(Math.random() * colors.length)];
+      }
+
+      function randomRotation() {
+        const angle = (Math.random() * 10 - 5).toFixed(1);
+        return `${angle}deg`;
+      }
+
+      function randomPosition(note) {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        let x = Math.random() * (screenWidth - 200);
+        let y = Math.random() * (screenHeight - 150);
+        if (
+          Math.abs(x - screenWidth / 2) < 200 &&
+          Math.abs(y - screenHeight / 2) < 200
+        ) {
+          x += 250;
+        }
+        note.style.left = `${x}px`;
+        note.style.top = `${y}px`;
+      }
+
+      function createNote(data) {
+        const note = document.createElement("div");
+        note.className = "note";
+        note.innerHTML = `
+          <p>${data.message}</p>
+          <p class="mt-2 text-sm text-gray-700 font-semibold">- ${data.nickname}</p>
+        `;
+        note.style.setProperty("--color", randomColor());
+        note.style.setProperty("--rotate", randomRotation());
+        randomPosition(note);
+        document.body.appendChild(note);
+      }
+
+      submitWish.addEventListener("click", async () => {
+        const nickname = nicknameInput.value.trim();
+        const message = wishText.value.trim();
+
+        nameError.classList.add("hidden");
+        wishError.classList.add("hidden");
+
+        let hasError = false;
+
+        if (!nickname) {
+          nameError.classList.remove("hidden");
+          nicknameInput.classList.add("border-red-500");
+          hasError = true;
+        } else {
+          nicknameInput.classList.remove("border-red-500");
+        }
+
+        if (!message) {
+          wishError.classList.remove("hidden");
+          wishText.classList.add("border-red-500");
+          hasError = true;
+        } else {
+          wishText.classList.remove("border-red-500");
+        }
+
+        if (hasError) return;
+
+        await addDoc(collection(db, "wishes"), {
+          nickname,
+          message,
+          createdAt: serverTimestamp(),
+        });
+
+        launchConfetti();
+
+        wishModal.classList.add("hidden");
+        nicknameInput.value = "";
+        wishText.value = "";
+      });
+
+      const renderedNotes = new Set();
+      onSnapshot(collection(db, "wishes"), (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === "added" && !renderedNotes.has(change.doc.id)) {
+            createNote(change.doc.data());
+            renderedNotes.add(change.doc.id);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

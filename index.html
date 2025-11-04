@@ -23,14 +23,17 @@
       .note {
         position: absolute;
         padding: 1rem;
-        border-radius: 0.3rem;
+        border-radius: 0.5rem;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        width: 150px;
+        width: 300px;
+        min-height: 220px;
         font-family: "Poppins", sans-serif;
         transform: rotate(var(--rotate));
         background: var(--color);
         color: #333;
+        overflow-wrap: break-word;
         animation: pop 0.3s ease-out;
+        font-size: 10px;
       }
 
       @keyframes pop {
@@ -215,8 +218,8 @@
         const note = document.createElement("div");
         note.className = "note";
         note.innerHTML = `
-          <p>${data.message}</p>
-          <p class="mt-2 text-sm text-gray-700 font-semibold">- ${data.nickname}</p>
+          <p class="text-xs">${data.message}</p>
+          <p class="mt-2 text-xs text-gray-700 font-semibold">- ${data.nickname}</p>
         `;
         note.style.setProperty("--color", randomColor());
         note.style.setProperty("--rotate", randomRotation());
